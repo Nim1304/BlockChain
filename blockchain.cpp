@@ -274,5 +274,5 @@ int main()
     if (send.size()!=recv.size())
     cout << "Sender-Reciever mismatch, Possible Intruder: "<<recv.back()<<endl;
     cout << "Is chain valid?: " << coin.is_chain_valid() << endl;
-    cout << "Sorry ...Chain not valid.Transaction cannot proceed...\n";
+    cout << "Sorry ...Chain not valid.Transaction cannot proceed...\n ";
 }
