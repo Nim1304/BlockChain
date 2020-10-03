@@ -16,11 +16,11 @@
 #include "md5.h"
 #include "md5.cpp"
 
-#define pb push_back //short for push_back while using vey
+#define pb push_back //short for push_back while using vector
 
 using namespace std;
-// For holding transaction information for each block
-struct Transaction
+
+struct Transaction  // For holding transaction information for each block
 {
     double amount;
     std::string rec;
@@ -30,12 +30,13 @@ struct Transaction
 
 Transaction *d1; // Global ptr to Transaction to use later in the program.
 
-// Block information class
-class Block
+
+class Block  // Block information class
 {
     int index;
     std::string previous_hash; // To store hash of previous block
-    std::string current_hash;  // //Stores the value of hash of the blocks
+    std::string current_hash;  // Stores the value of hash of the blocks
+    std::string block_addr;    // Like UID to store the uniquely available block address
 
   public:
     Transaction data;
@@ -55,6 +56,7 @@ class Block
         return index;
     }
 
+    std::string get_block_addr();      //To get block address
     std::string generate_block_hash(); //To generate block hash
     bool is_hash_valid();              //To check if the hash generated is valid
     Block() {}
@@ -68,7 +70,17 @@ Block::Block(int idx, Transaction d, std::string PrevHash)
     previous_hash = PrevHash;
     data = d;
     current_hash = generate_block_hash();
+    block_addr= get_block_addr();
 }
+
+std::string Block:: get_block_addr(){
+    std::string block_address;
+    std::string to_hash= previous_hash+data.rec;
+    picosha2::hash256_hex_string(to_hash,block_address);
+    block_address=joyee::md5(block_address);
+    return block_address;
+}
+
 std::string Block::generate_block_hash() // This is where magic happens...
 {
     std::string hashed;
@@ -169,6 +181,8 @@ void Chain::display_chain()
     std::vector<Block>::iterator i;
     for (i = Bchain.begin(); i != Bchain.end(); i++)
     {
+        cout << "\n======================Block Start========================\n";
+        cout << "Block Address: "<<i->get_block_addr() <<endl;
         cout << "Index: " << i->get_index() << endl;
         cout << "Amount: " << i->data.amount << endl;
         cout << "Sender: " << i->data.sen << endl;
@@ -177,6 +191,15 @@ void Chain::display_chain()
         cout << "Hash: " << i->get_hash() << endl;
         cout << "Previous hash: " << i->get_prev_hash() << endl;
         cout << "Is block valid? :" << i->is_hash_valid() << endl;
+        
+        if (i->data.sen=="genesis")
+            cout<<"Genensis Block"<<endl;
+        else if (i->data.amount==0) 
+            cout<< "Signature notifying block"<<endl;
+        else 
+            cout<<"Transaction Block"<<endl;
+        if (i->is_hash_valid()==false)
+            cout<<"Transaction data modified, Immutability disturbed, Block Aborted, Chain Abandoned"<<endl;
         cout << "======================Block End========================\n";
     }
 }
@@ -190,12 +213,13 @@ int main()
     double amt;
     time_t timestamp;
     std::string s, r;
-
+    vector<string> recv;
+    vector<string> send;
     while (l)
     {
         cout << "Do you want to make a transaction?(1/0):";
         cin >> switch_main;
-
+       
         switch (switch_main)
         {
 
@@ -207,6 +231,8 @@ int main()
             cin >> s;
             cout << "Enter receiver's address:";
             cin >> r;
+            send.pb(s);
+            recv.pb(r);
             d1->sen = s;
             d1->rec = r;
             d1->amount = amt;
@@ -217,6 +243,8 @@ int main()
             cout << "Block created.\n";
 
             coin.add_block(B);
+            if (send.size()!=recv.size())
+                cout << "Sender-Reciever mismatch, instability detected"<<endl;
 
             cout << "Adding block to the chain...\n";
 
@@ -236,12 +264,15 @@ int main()
     coin.display_chain();
     cout << "Is chain valid?: " << coin.is_chain_valid() << endl;
 
-    cout << "\n\n\n\n\nHacking in progress...";
+    cout << "\n\n\n\n\nHacking in progress..."<<endl;
     Block *Hackblock;
     Hackblock = coin.latest_block(); //Hackblock...
     Hackblock->data.rec = "Nimish";
+    recv.pb(Hackblock->data.rec);
     Hackblock->data.amount = 10000;
     coin.display_chain();
+    if (send.size()!=recv.size())
+    cout << "Sender-Reciever mismatch, Possible Intruder: "<<recv.back()<<endl;
     cout << "Is chain valid?: " << coin.is_chain_valid() << endl;
     cout << "Sorry ...Chain not valid.Transaction cannot proceed...\n";
 }
